@@ -7,23 +7,19 @@ import os #for file navigation
 import time #for last modified
 import json #for metadata storage
 
-test_dir = r"C:\Users\itspebbleboy\Documents\GitHub\File-Metadata-Search-Tool-Python\test_folder"
-test_file = r"C:\Users\itspebbleboy\Documents\GitHub\File-Metadata-Search-Tool-Python\test_folder\file.txt"
+TEST_DIR = r"C:\Users\itspebbleboy\Documents\GitHub\File-Metadata-Search-Tool-Python\test_folder"
+TEST_FILE = r"C:\Users\itspebbleboy\Documents\GitHub\File-Metadata-Search-Tool-Python\test_folder\file.txt"
 
-#func, scans a directory & prints paths of all files
+DEFAULT_METADATA_FILE = "metadata.json"
+
+#basic func: scans a directory & prints paths of all files
 def scan_directory(directory):
     #walk thru directories & subdirectories
-    for root, dirs, files in os.walk(directory):
+    for root, _, files in os.walk(directory):
         for file in files: #iter thru all files in curr dir
             file_path = os.path.join(root,file)
-            print(file_path) #print full file path of ea file
 
-#test printing functionality w/ test folder
-scan_directory(test_dir)
-
-#############
-
-# function, gets metadata of file
+#func: gets metadata of file
 def get_file_metadata(file_path):
     stats = os.stat(file_path) #get file stats
     return{
@@ -33,19 +29,13 @@ def get_file_metadata(file_path):
         "last_modified": time.ctime(stats.st_mtime) # last modified time (into a nice format)
     }
 
-
-metadata = get_file_metadata(test_file)
-print(metadata)
-
-#############
-
-#func, saves metadata to JSON
-def save_to_JSON(data, filename="metadata.json"):
+#func: saves metadata to JSON
+def save_to_JSON(data, filename = DEFAULT_METADATA_FILE):
     with open(filename, "w") as file: #open file (write mode)
         json.dump(data, file, indent=4) #write to json (w/ nice indentation)
 
-
-def scan_dir_and_store_metadata(directory):
+#func: scans dir, stores files' metadata into the output file
+def scan_dir_and_store_metadata(directory, output_file = DEFAULT_METADATA_FILE):
     #list of file metadata to feed save_to_json func l8er
     file_metadata = [] 
     for root, dirs, files in os.walk(directory):
@@ -53,14 +43,21 @@ def scan_dir_and_store_metadata(directory):
             file_path = os.path.join(root,file)
             #add metadata of file to list
             file_metadata.append(get_file_metadata(file_path)) 
-    save_to_JSON(file_metadata)
+    save_to_JSON(file_metadata, output_file)
 
-scan_dir_and_store_metadata(test_dir)
-
-#############
-
-#func, search metadata by keyword in file name
+#func: search metadata by keyword in file name
 def search_metadata(data, search_term):
     #results = files where "name" contains the search_term (not case sensitive)
-    results = [file for file in data if search_term.lower() in file['name'].lower()]
-    return results
+   return [file for file in data if search_term.lower() in file['name'].lower()]
+
+
+if __name__ == "__main__":
+    #scan directory & save metadata to default JSON file
+    scan_dir_and_store_metadata(TEST_DIR)
+    #load that file
+    with open(DEFAULT_METADATA_FILE, "r") as file:
+        metadata_list = json.load(file) #load json as py list
+
+    search_results = search_metadata(metadata_list, "1")
+    print(search_results)
+
